@@ -3,6 +3,8 @@
 
 #include <QDebug>
 
+static const char blankString[] = QT_TRANSLATE_NOOP("SettingsDialog", "N/A");
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -34,9 +36,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_openCOM_clicked()
 {
-
     if(ui->pushButton_openCOM->text() == "Open")
-    {// open port
+    {
+        // open port
         qDebug() << "open port";
         ui->pushButton_refresh->setEnabled(false);
         ui->pushButton_openCOM->setText(tr("Close"));
@@ -142,27 +144,49 @@ void MainWindow::on_pushButton_send_clicked()
 */
 void MainWindow::on_pushButton_refresh_clicked()
 {
+    // ! [1]
+    ui->comboBox_comport->clear();
+    QString _description;
+    QString _manufacturer;
+    QString _serialNumber;
+
+    const auto infos = QSerialPortInfo::availablePorts();
     /* get info of serial port */
-    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-    {
-        //qDebug() << "port name    :" << info.portName();
-        //qDebug() << "description  :" << info.description();
-        //qDebug() << "manufacturer :" << info.manufacturer();
-        //qDebug() << "Open mode    :" << ;
+    for (const QSerialPortInfo &info : infos) {
+        QStringList list;
+        _description = info.description();
+        _manufacturer = info.manufacturer();
+        _serialNumber = info.serialNumber();
+        list << info.portName()
+             << (!_description.isEmpty() ? _description : blankString)
+             << (!_manufacturer.isEmpty() ? _manufacturer : blankString)
+             << (!_serialNumber.isEmpty() ? _serialNumber : blankString)
+             << info.systemLocation()
+             << (info.vendorIdentifier() ? QString::number(info.vendorIdentifier(), 16) : blankString)
+             << (info.productIdentifier() ? QString::number(info.productIdentifier(), 16) : blankString);
 
-        QSerialPort com_port;
-        com_port.setPort(info);
-
-        if(com_port.open( QIODevice::ReadWrite))
-        {
-            qDebug() << "port name    :" << info.portName();
-            //if((ui->comboBox_comport->currentText()).contains(info.portName(), Qt::CaseInsensitive))
-            //ui->comboBox_comport->clear();
-            if( ( info.isValid() ) && ( ui->comboBox_comport->findText(info.portName()) ) )
-            ui->comboBox_comport->addItem(info.portName());
-            com_port.close();
-        }
+        ui->comboBox_comport->addItem(list.first(), list);
     }
+//    foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
+//    {
+//        //qDebug() << "port name    :" << info.portName();
+//        //qDebug() << "description  :" << info.description();
+//        //qDebug() << "manufacturer :" << info.manufacturer();
+//        //qDebug() << "Open mode    :" << ;
+
+//        QSerialPort com_port;
+//        com_port.setPort(info);
+
+//        if(com_port.open( QIODevice::ReadWrite))
+//        {
+//            qDebug() << "port name    :" << info.portName();
+//            //if((ui->comboBox_comport->currentText()).contains(info.portName(), Qt::CaseInsensitive))
+//            //ui->comboBox_comport->clear();
+//            if( ( info.isValid() ) && ( ui->comboBox_comport->findText(info.portName()) ) )
+//            ui->comboBox_comport->addItem(info.portName());
+//            com_port.close();
+//        }
+//    }
 }
 
 void MainWindow::readMycom()
